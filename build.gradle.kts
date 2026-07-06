@@ -15,8 +15,8 @@ plugins {
     id("groovy")
     id("java-gradle-plugin")
     id("maven-publish")
-    id("org.jreleaser") version "1.13.1"
-    id("com.gradle.plugin-publish") version "1.3.0"
+    id("org.jreleaser") version "1.25.0"
+    id("com.gradle.plugin-publish") version "2.1.1"
     id("signing")
     `kotlin-dsl`
 }
@@ -139,10 +139,10 @@ repositories {
 defaultTasks("build")
 
 dependencies {
-    implementation("com.ibm.cics:cics-bundle-common:2.0.3")
+    implementation("com.ibm.cics:cics-bundle-common:2.0.4")
     testImplementation("junit:junit:4.13.2")
-    testImplementation("com.github.tomakehurst:wiremock-jre8:2.35.1")
-    testImplementation(enforcedPlatform("org.spockframework:spock-bom:2.3-groovy-4.0"))
+    testImplementation("com.github.tomakehurst:wiremock-jre8:2.35.2")
+    testImplementation(enforcedPlatform("org.spockframework:spock-bom:2.4-groovy-4.0"))
     testImplementation("org.spockframework:spock-junit4")
     testImplementation("org.spockframework:spock-core")
     
