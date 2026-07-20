@@ -1,0 +1,64 @@
+name: Post Release
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - build.gradle.kts
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  post-release:
+    name: Open next-dev PR
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Read current version
+        id: version
+        run: |
+          VERSION=$(grep -m1 '^version = ' build.gradle.kts | sed 's/version = "\(.*\)"/\1/')
+          echo "current=$VERSION" >> "$GITHUB_OUTPUT"
+
+      - name: Exit if this is a SNAPSHOT commit
+        if: contains(steps.version.outputs.current, '-SNAPSHOT')
+        run: echo "SNAPSHOT version — nothing to do." && exit 0
+
+      - name: Compute next SNAPSHOT version
+        if: "!contains(steps.version.outputs.current, '-SNAPSHOT')"
+        id: next
+        run: |
+          VERSION=${{ steps.version.outputs.current }}
+          MAJOR=$(echo "$VERSION" | cut -d. -f1)
+          MINOR=$(echo "$VERSION" | cut -d. -f2)
+          PATCH=$(echo "$VERSION" | cut -d. -f3)
+          NEXT_PATCH=$((PATCH + 1))
+          echo "version=${MAJOR}.${MINOR}.${NEXT_PATCH}-SNAPSHOT" >> "$GITHUB_OUTPUT"
+
+      - name: Update version in build.gradle.kts
+        if: "!contains(steps.version.outputs.current, '-SNAPSHOT')"
+        run: ./gradlew setVersion -PnewVersion=${{ steps.next.outputs.version }}
+
+      - name: Open next-dev PR
+        if: "!contains(steps.version.outputs.current, '-SNAPSHOT')"
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          BRANCH="develop/${{ steps.next.outputs.version }}"
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git checkout -b "$BRANCH"
+          git add build.gradle.kts
+          git commit -m "develop ${{ steps.next.outputs.version }}"
+          git push origin "$BRANCH"
+          gh pr create \
+            --title "Develop ${{ steps.next.outputs.version }}" \
+            --body  "Bumps version to \`${{ steps.next.outputs.version }}\` following the \`${{ steps.version.outputs.current }}\` release." \
+            --base  main \
+            --head  "$BRANCH"

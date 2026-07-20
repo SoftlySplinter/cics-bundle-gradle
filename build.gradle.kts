@@ -161,6 +161,41 @@ tasks.named<Test>("test") {
     }
 }
 
+tasks.register("setVersion") {
+    group = "versioning"
+    description = "Overwrites the version in build.gradle.kts. Pass -PnewVersion=<version>"
+    doLast {
+        val newVersion = project.property("newVersion") as String
+        val buildFile = layout.projectDirectory.file("build.gradle.kts").asFile
+        val updated = buildFile.readText().replaceFirst(
+            Regex("""^version = ".*"$""", RegexOption.MULTILINE),
+            """version = "$newVersion""""
+        )
+        buildFile.writeText(updated)
+        logger.lifecycle("Version set to $newVersion")
+    }
+}
+
+tasks.register("setReleaseVersion") {
+    group = "versioning"
+    description = "Sets the release version in build.gradle.kts, samples, and README. Pass -PnewVersion=<version>"
+    dependsOn("setVersion")
+    doLast {
+        val newVersion = project.property("newVersion") as String
+        val pluginVersionRegex = Regex("""(id 'com\.ibm\.cics\.bundle' version ')[^']+'""")
+        listOf(
+            "samples/gradle-war-sample/standalone-war-demo/build.gradle",
+            "samples/gradle-multipart-sample/gradle-bundle-demo/build.gradle",
+            "samples/gradle-osgi-sample/build.gradle",
+            "README.md"
+        ).forEach { path ->
+            val file = layout.projectDirectory.file(path).asFile
+            file.writeText(file.readText().replace(pluginVersionRegex, "${'$'}1$newVersion'"))
+        }
+        logger.lifecycle("Release version set to $newVersion in samples and README")
+    }
+}
+
 tasks.register("publishAll") {
     group = "publishing"
     description = "Publishes all artifacts to appropriate places depending on whether it's a snapshot or release build"
