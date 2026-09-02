@@ -312,6 +312,7 @@ class GoldenPathTests extends AbstractTest {
 		gradleVersion << GradleVersions.GRADLE_VERSIONS
 	}
 
+<<<<<<< Updated upstream
 	@Unroll
 	def "Test file-based dependency on Gradle #gradleVersion"(String gradleVersion) {
 
@@ -349,5 +350,55 @@ class GoldenPathTests extends AbstractTest {
 
 		where:
 		gradleVersion << GradleVersions.GRADLE_VERSIONS
+=======
+
+	@Unroll
+	def "Test extended CICS configation #type project on Gradle #gradleVersion"(String gradleVersion, String type) {
+
+		def projectName = null
+		def archiveExtension = null
+		def bindingExtension = null
+		switch(type) {
+			case "war":
+				projectName = "extended-war"
+				archiveExtension = "war"
+				bindingExtension = "warbundle"
+				break
+			case "ear":
+				projectName = "extended-ear"
+				archiveExtension = "ear"
+				bindingExtension = "earbundle"
+				break
+			default:
+				assert false : "Unsupported extended type: $type"
+		}
+
+		given:
+		rootProjectName = bundleProjectName = projectName
+
+		copyTestProject()
+		def jvmsWlp = gradleProperties.getProperty("jvmsWlp")
+
+		when:
+		runGradleAndSucceed([BundlePlugin.DEPLOY_TASK_NAME], gradleVersion)
+
+		then:
+		checkBuildOutputFiles([
+				"${bundleNameAndVersion}.${archiveExtension}",
+				"${bundleNameAndVersion}.${bindingExtension}"
+		])
+		
+		checkFileContains(getFileInDir(bundleBuildDir, "${bundleNameAndVersion}.${bindingExtension}") , ["<${bindingExtension} addCICSAllAuth=\"false\" appConfigFile=\"test.xml\" jvmserver=\"${jvmsWlp}\" symbolicname=\"${bundleNameAndVersion}\"/>"])
+
+		checkManifest([
+				"<define name=\"${bundleNameAndVersion}\" path=\"${bundleNameAndVersion}.${bindingExtension}\" type=\"http://www.ibm.com/xmlns/prod/cics/bundle/${bindingExtension.toUpperCase()}\"/>"
+		])
+
+		checkBundleArchiveFile()
+
+		// Parameterize test so the same test can be used for each project type
+		where:
+		[gradleVersion, type] << GradleVersions.onAllVersions(["war", "ear"])
+>>>>>>> Stashed changes
 	}
 }

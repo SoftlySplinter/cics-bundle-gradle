@@ -18,12 +18,15 @@ import com.ibm.cics.bundle.parts.WarBundlePart
 import org.gradle.api.GradleException
 import java.io.File
 
-class WarBundlePartBinding() : AbstractJavaBundlePartBinding() {
+/** Binds the gradle cicsBundleWar dependency to a WarBundlePart object.  */
+class WarBundlePartBinding() : AbstractLibertyBundlePartBinding() {
 
 	override fun toBundlePart(): BundleResource {
 		return WarBundlePart(
 				name,
 				jvmserver,
+				addCICSAllAuthenticatedRole,
+				libertyAppConfigFile,
 				file
 		)
 	}

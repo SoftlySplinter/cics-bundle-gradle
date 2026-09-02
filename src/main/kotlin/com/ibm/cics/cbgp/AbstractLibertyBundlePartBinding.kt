@@ -2,7 +2,7 @@
  * #%L
  * CICS Bundle Gradle Plugin
  * %%
- * Copyright (C) 2019 IBM Corp.
+ * Copyright (C) 2019, 2023 IBM Corp.
  * %%
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
@@ -13,20 +13,13 @@
  */
 package com.ibm.cics.cbgp
 
-import com.ibm.cics.bundle.parts.BundleResource
-import com.ibm.cics.bundle.parts.EarBundlePart
 import org.gradle.api.GradleException
 import java.io.File
 
-class EarBundlePartBinding() : AbstractLibertyBundlePartBinding() {
+abstract class AbstractLibertyBundlePartBinding() : AbstractJavaBundlePartBinding() {
+	/** Binds to the addCICSAllAuth bundle attribute. */
+	var addCICSAllAuthenticatedRole: Boolean = true
 
-	override fun toBundlePart(): BundleResource {
-		return EarBundlePart(
-				name,
-				jvmserver,
-				addCICSAllAuthenticatedRole,
-				libertyAppConfigFile,
-				file,
-		)
-	}
+	/** Binds to the appConfigFile bundle attribute. */
+	var libertyAppConfigFile: File? = null
 }
